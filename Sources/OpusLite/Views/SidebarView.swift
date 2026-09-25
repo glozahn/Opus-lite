@@ -5,7 +5,7 @@ struct SidebarView: View {
 
     var body: some View {
         List(selection: Binding(get: { library.filter }, set: { if let f = $0 { library.filter = f } })) {
-            Section("Biblioteca") {
+            Section("Library") {
                 ForEach(SidebarFilter.allCases) { filter in
                     Label(filter.title, systemImage: filter.icon)
                         .badge(library.count(filter))
@@ -26,9 +26,9 @@ struct SidebarView: View {
                     .frame(width: 8, height: 8)
                     .padding(.top, 5)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Procesamiento local")
+                    Text("Local processing")
                         .font(.callout.weight(.medium))
-                    Text("Tus archivos se procesan en este Mac. Nada sale a internet.")
+                    Text("Your files are processed on this Mac. Nothing leaves it.")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)

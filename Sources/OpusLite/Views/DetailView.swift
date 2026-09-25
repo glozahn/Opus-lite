@@ -15,11 +15,11 @@ struct DetailView: View {
                 MultiSelection(library: library, showExport: $showExport)
             } else {
                 ContentUnavailableView {
-                    Label("Selecciona un archivo", systemImage: "text.bubble")
+                    Label("Select a File", systemImage: "text.bubble")
                 } description: {
-                    Text("Arrastra audios de WhatsApp, vídeos, PDF o imágenes para convertirlos en texto.")
+                    Text("Drop WhatsApp audio, video, PDFs or images to turn them into text.")
                 } actions: {
-                    Button("Importar…") { library.importPanel() }
+                    Button("Import…") { library.importPanel() }
                         .buttonStyle(.borderedProminent)
                 }
             }
@@ -31,13 +31,13 @@ struct DetailView: View {
     }
 }
 
-// MARK: - Un archivo
+// MARK: - Single file
 
 private enum DetailTab: String, CaseIterable {
     case transcript, subtitles
 }
 
-/// Párrafo mostrado y los tramos que lo forman (para editar sin perder tiempos).
+/// A displayed paragraph and its source segments (to edit without losing timings).
 private struct Paragraph: Identifiable {
     var segment: Segment
     var sources: [UUID]
@@ -72,7 +72,7 @@ private struct ItemDetail: View {
         .background(Color(nsColor: .textBackgroundColor))
     }
 
-    // MARK: Cabecera
+    // MARK: Header
 
     private var header: some View {
         HStack(alignment: .top, spacing: 12) {
@@ -99,20 +99,20 @@ private struct ItemDetail: View {
                     .foregroundStyle(item.favorite ? .yellow : .secondary)
             }
             .buttonStyle(.borderless)
-            .help(item.favorite ? "Quitar de favoritos" : "Añadir a favoritos")
+            .help(item.favorite ? String(localized: "Remove from Favorites") : String(localized: "Add to Favorites"))
 
             Menu {
-                Button(item.segments.isEmpty ? "Transcribir" : "Volver a transcribir") { library.enqueue([item.id]) }
+                Button(item.segments.isEmpty ? String(localized: "Transcribe") : String(localized: "Transcribe Again")) { library.enqueue([item.id]) }
                     .disabled(item.status.isActive)
-                Button(editing ? "Terminar edición" : "Editar texto") { editing.toggle() }
+                Button(editing ? String(localized: "Done Editing") : String(localized: "Edit Text")) { editing.toggle() }
                     .disabled(item.segments.isEmpty || item.status.isActive)
-                Button("Copiar texto") { library.copyText(item) }
+                Button("Copy Text") { library.copyText(item) }
                     .disabled(item.segments.isEmpty)
                 Divider()
-                Button("Mostrar en Finder") { NSWorkspace.shared.activateFileViewerSelecting([item.url]) }
-                Button("Abrir con la app predeterminada") { NSWorkspace.shared.open(item.url) }
+                Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([item.url]) }
+                Button("Open with Default App") { NSWorkspace.shared.open(item.url) }
                 Divider()
-                Button("Mover a la papelera", role: .destructive) { library.trash([item.id]) }
+                Button("Move to Trash", role: .destructive) { library.trash([item.id]) }
             } label: {
                 Image(systemName: "ellipsis")
                     .font(.title3)
@@ -132,24 +132,29 @@ private struct ItemDetail: View {
         var parts: [String] = []
         if let id = item.localeID { parts.append(library.localeName(id).components(separatedBy: " (").first ?? id) }
         if item.duration > 0 { parts.append(item.duration.clock) }
-        if item.kind == .pdf, item.pages > 0 { parts.append("\(item.pages) páginas") }
+        if item.kind == .pdf, item.pages > 0 { parts.append(String(localized: "\(item.pages) pages")) }
         if item.status == .done, let when = item.modified {
-            var done = "\(item.kind.isDocument ? "Texto extraído" : "Transcrito") \(when.friendly.lowercased())"
-            if let e = item.elapsed { done += " en \(e.formatted(.number.precision(.fractionLength(1)))) s" }
-            parts.append(done)
+            let date = when.friendlyInline
+            let seconds = item.elapsed.map { $0.formatted(.number.precision(.fractionLength(1))) }
+            switch (item.kind.isDocument, seconds) {
+            case (true, let s?): parts.append(String(localized: "Text extracted \(date) in \(s) s"))
+            case (true, nil): parts.append(String(localized: "Text extracted \(date)"))
+            case (false, let s?): parts.append(String(localized: "Transcribed \(date) in \(s) s"))
+            case (false, nil): parts.append(String(localized: "Transcribed \(date)"))
+            }
         } else {
-            parts.append("Añadido \(item.added.friendly.lowercased())")
+            parts.append(String(localized: "Added \(item.added.friendlyInline)"))
         }
         return parts.joined(separator: " · ")
     }
 
     private var tabs: some View {
         HStack(spacing: 22) {
-            tabButton("Transcripción", .transcript)
-            tabButton("Subtítulos", .subtitles)
+            tabButton("Transcript", .transcript)
+            tabButton("Subtitles", .subtitles)
             Spacer()
             if editing {
-                Button("Listo") { editing = false }
+                Button("Done") { editing = false }
                     .buttonStyle(.borderedProminent)
                     .controlSize(.small)
             }
@@ -158,7 +163,7 @@ private struct ItemDetail: View {
         .padding(.top, 6)
     }
 
-    private func tabButton(_ title: String, _ value: DetailTab) -> some View {
+    private func tabButton(_ title: LocalizedStringKey, _ value: DetailTab) -> some View {
         Button { tab = value } label: {
             VStack(spacing: 7) {
                 Text(title)
@@ -173,34 +178,34 @@ private struct ItemDetail: View {
         .buttonStyle(.plain)
     }
 
-    // MARK: Contenido
+    // MARK: Content
 
     @ViewBuilder private var content: some View {
         switch item.status {
         case .failed(let message) where item.segments.isEmpty:
-            stateView(icon: "exclamationmark.triangle.fill", tint: .red, title: "No se pudo procesar", detail: message) {
-                Button("Reintentar") { library.enqueue([item.id]) }
+            stateView(icon: "exclamationmark.triangle.fill", tint: .red, title: String(localized: "Could Not Process"), detail: message) {
+                Button("Retry") { library.enqueue([item.id]) }
                     .buttonStyle(.borderedProminent)
             }
         case .pending where item.segments.isEmpty:
             stateView(
                 icon: item.kind.isDocument ? "doc.text.viewfinder" : "waveform",
                 tint: .secondary,
-                title: item.kind.isDocument ? "Texto sin extraer" : "Aún sin transcribir",
-                detail: item.fileExists ? "Pulsa Transcribir (⌘R)." : "No se encuentra el archivo original."
+                title: item.kind.isDocument ? String(localized: "Text Not Extracted Yet") : String(localized: "Not Transcribed Yet"),
+                detail: item.fileExists ? String(localized: "Press Transcribe (⌘R).") : String(localized: "The original file can’t be found.")
             ) {
-                Button("Transcribir") { library.enqueue([item.id]) }
+                Button("Transcribe") { library.enqueue([item.id]) }
                     .buttonStyle(.borderedProminent)
                     .disabled(!item.fileExists)
             }
         case .queued where item.segments.isEmpty:
-            stateView(icon: "clock", tint: .secondary, title: "En espera", detail: "Se procesará en cuanto termine el anterior.") {
-                Button("Cancelar") { library.cancel(item.id) }
+            stateView(icon: "clock", tint: .secondary, title: String(localized: "Waiting"), detail: String(localized: "It will start as soon as the previous one finishes.")) {
+                Button("Cancel") { library.cancel(item.id) }
             }
         case .working(let p) where item.segments.isEmpty:
-            stateView(icon: nil, tint: .secondary, title: item.kind.isDocument ? "Reconociendo texto…" : "Transcribiendo…",
-                      detail: p > 0 ? p.formatted(.percent.precision(.fractionLength(0))) : "Preparando modelo…") {
-                Button("Cancelar") { library.cancel(item.id) }
+            stateView(icon: nil, tint: .secondary, title: item.kind.isDocument ? String(localized: "Recognizing text…") : String(localized: "Transcribing…"),
+                      detail: p > 0 ? p.formatted(.percent.precision(.fractionLength(0))) : String(localized: "Preparing model…")) {
+                Button("Cancel") { library.cancel(item.id) }
             }
         default:
             if tab == .subtitles && !item.kind.isDocument {
@@ -257,7 +262,7 @@ private struct ItemDetail: View {
                         ParagraphRow(
                             para: para,
                             kind: item.kind,
-                            showTime: library.showTimestamps,
+                            showTime: library.showTimestamps && item.kind != .image,
                             isCurrent: para.id == current,
                             query: library.search,
                             editing: editing,
@@ -271,7 +276,7 @@ private struct ItemDetail: View {
                     if case .working(let p) = item.status {
                         HStack(spacing: 8) {
                             ProgressView().controlSize(.small)
-                            Text("Transcribiendo… \(p.formatted(.percent.precision(.fractionLength(0))))")
+                            Text("Transcribing… \(p.formatted(.percent.precision(.fractionLength(0))))")
                                 .foregroundStyle(.secondary)
                         }
                         .padding(.top, 8)
@@ -319,21 +324,21 @@ private struct ItemDetail: View {
         }
     }
 
-    // MARK: Pie
+    // MARK: Footer
 
     private var footer: some View {
         HStack(spacing: 16) {
             if case .working = item.status {
-                Button("Cancelar", systemImage: "stop.circle") { library.cancel(item.id) }
+                Button("Cancel", systemImage: "stop.circle") { library.cancel(item.id) }
             }
             Spacer()
-            Text("\(item.wordCount) palabras")
+            Text("\(item.wordCount) words")
                 .font(.callout.monospacedDigit())
                 .foregroundStyle(.secondary)
             Divider().frame(height: 16)
-            Button("Copiar", systemImage: "doc.on.doc") { library.copyText(item) }
+            Button("Copy", systemImage: "doc.on.doc") { library.copyText(item) }
                 .disabled(item.segments.isEmpty)
-            Button("Exportar", systemImage: "square.and.arrow.up") { showExport = true }
+            Button("Export", systemImage: "square.and.arrow.up") { showExport = true }
                 .disabled(item.segments.isEmpty)
         }
         .buttonStyle(.borderless)
@@ -367,7 +372,7 @@ private struct ParagraphRow: View {
                 }
                 .buttonStyle(.plain)
                 .disabled(kind.isDocument)
-                .help(kind.isDocument ? "" : "Reproducir desde aquí")
+                .help(kind.isDocument ? "" : String(localized: "Play from here"))
             }
             if editing {
                 TextField("", text: $draft, axis: .vertical)
@@ -404,7 +409,7 @@ private struct ParagraphRow: View {
     }
 }
 
-/// Miniatura para PDF e imágenes, en el lugar del reproductor.
+/// Thumbnail for PDFs and images, in place of the player.
 private struct DocumentPreview: View {
     let item: LibraryItem
     @State private var image: NSImage?
@@ -422,13 +427,13 @@ private struct DocumentPreview: View {
             .clipShape(RoundedRectangle(cornerRadius: 6))
             .shadow(radius: 1)
             VStack(alignment: .leading, spacing: 4) {
-                Text(item.kind == .pdf ? "Documento PDF" : "Imagen")
+                Text(item.kind == .pdf ? String(localized: "PDF Document") : String(localized: "Image"))
                     .font(.callout.weight(.medium))
-                Text("Texto extraído con la capa del PDF o reconocimiento óptico (Vision), en este Mac.")
+                Text("Text taken from the PDF text layer or optical recognition (Vision), on this Mac.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-                Button("Abrir original") { NSWorkspace.shared.open(item.url) }
+                Button("Open Original") { NSWorkspace.shared.open(item.url) }
                     .buttonStyle(.link)
                     .font(.caption)
             }
@@ -446,7 +451,7 @@ private struct DocumentPreview: View {
     }
 }
 
-// MARK: - Varios seleccionados
+// MARK: - Multiple selection
 
 private struct MultiSelection: View {
     @Bindable var library: Library
@@ -463,16 +468,16 @@ private struct MultiSelection: View {
                 }
             }
             .frame(height: 70)
-            Text("\(items.count) archivos seleccionados")
+            Text("\(items.count) files selected")
                 .font(.title3.weight(.semibold))
-            Text("\(items.filter { $0.status == .done }.count) transcritos · \(items.reduce(0) { $0 + $1.wordCount }) palabras")
+            Text("\(items.filter { $0.status == .done }.count) transcribed · \(items.reduce(0) { $0 + $1.wordCount }) words")
                 .foregroundStyle(.secondary)
             HStack {
-                Button("Transcribir") { library.transcribeSelection() }
+                Button("Transcribe") { library.transcribeSelection() }
                     .buttonStyle(.borderedProminent)
-                Button("Exportar…") { showExport = true }
+                Button("Export…") { showExport = true }
                     .disabled(!items.contains { !$0.segments.isEmpty })
-                Button("Mover a la papelera") { library.trash(library.selection) }
+                Button("Move to Trash") { library.trash(library.selection) }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

@@ -3,7 +3,7 @@ import AppKit
 import PDFKit
 import Vision
 
-/// Utilidades de medios: duración, audio de vídeos, forma de onda y OCR.
+/// Media helpers: duration, audio from video, waveform and OCR.
 enum Media {
     static let cacheDir: URL = {
         let dir = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
@@ -12,7 +12,7 @@ enum Media {
         return dir
     }()
 
-    // MARK: - Metadatos
+    // MARK: - Metadata
 
     static func duration(of url: URL, kind: FileKind) async -> TimeInterval {
         switch kind {
@@ -37,9 +37,9 @@ enum Media {
         }
     }
 
-    // MARK: - Audio reproducible / transcribible
+    // MARK: - Playable / transcribable audio
 
-    /// Ruta de audio que AVAudioFile puede leer. Los vídeos se extraen a .m4a (en caché).
+    /// An audio path AVAudioFile can read. Videos are extracted to .m4a (cached).
     static func playableAudio(for item: LibraryItem) async throws -> URL {
         guard item.kind == .video else { return item.url }
         let out = cacheDir.appendingPathComponent(item.id.uuidString).appendingPathExtension("m4a")
@@ -59,9 +59,9 @@ enum Media {
         return out
     }
 
-    // MARK: - Forma de onda
+    // MARK: - Waveform
 
-    /// Picos normalizados (0…1) en `bins` columnas.
+    /// Normalized peaks (0…1) in `bins` columns.
     static func waveform(of url: URL, bins: Int = 180) async -> [Float] {
         await Task.detached(priority: .utility) {
             guard let file = try? AVAudioFile(forReading: url), file.length > 0,
@@ -75,7 +75,7 @@ enum Media {
                 let n = Int(buffer.frameLength)
                 if n == 0 { break }
                 guard let data = buffer.floatChannelData?[0] else { break }
-                // Muestreo con paso para no recorrer cada muestra en audios largos.
+                // Stride through samples so long audio stays cheap.
                 var i = 0
                 while i < n {
                     let bin = min((frame + i) / perBin, bins - 1)
@@ -91,7 +91,7 @@ enum Media {
 
     // MARK: - OCR
 
-    /// Texto por página: usa la capa de texto del PDF si existe y OCR (Vision) si no.
+    /// Text per page: uses the PDF text layer when present and OCR (Vision) otherwise.
     static func recognizeText(
         in item: LibraryItem,
         languages: [String],

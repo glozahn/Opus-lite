@@ -1,7 +1,7 @@
 import AVFoundation
 import Observation
 
-/// Graba notas de voz del micrófono a .m4a en la carpeta de la app.
+/// Records voice notes from the microphone to .m4a in the app folder.
 @MainActor
 @Observable
 final class Recorder {
@@ -15,7 +15,7 @@ final class Recorder {
 
     static let folder: URL = {
         let dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("OpusLite/Grabaciones", isDirectory: true)
+            .appendingPathComponent("OpusLite/Recordings", isDirectory: true)
         try? FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
         return dir
     }()
@@ -23,10 +23,10 @@ final class Recorder {
     func start() async {
         error = nil
         guard await AVAudioApplication.requestRecordPermission() else {
-            error = "Sin permiso de micrófono. Actívalo en Ajustes del Sistema › Privacidad › Micrófono."
+            error = String(localized: "No microphone permission. Turn it on in System Settings › Privacy › Microphone.")
             return
         }
-        let name = "Grabación " + Date().formatted(.dateTime.year().month(.twoDigits).day(.twoDigits).hour(.twoDigits(amPM: .omitted)).minute(.twoDigits).second(.twoDigits))
+        let name = String(localized: "Recording") + " " + Date().formatted(.dateTime.year().month(.twoDigits).day(.twoDigits).hour(.twoDigits(amPM: .omitted)).minute(.twoDigits).second(.twoDigits))
             .replacingOccurrences(of: "/", with: "-")
             .replacingOccurrences(of: ":", with: ".")
         let url = Self.folder.appendingPathComponent(name).appendingPathExtension("m4a")
@@ -57,11 +57,11 @@ final class Recorder {
                 }
             }
         } catch {
-            self.error = "No se pudo grabar: \(error.localizedDescription)"
+            self.error = String(localized: "Could not record: \(error.localizedDescription)")
         }
     }
 
-    /// Detiene y devuelve el archivo grabado.
+    /// Stops and returns the recorded file.
     func stop() -> URL? {
         ticker?.cancel()
         guard let r = recorder else { return nil }

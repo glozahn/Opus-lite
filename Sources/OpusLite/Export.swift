@@ -9,11 +9,11 @@ enum ExportFormat: String, CaseIterable, Identifiable {
 
     var detail: String {
         switch self {
-        case .txt: "Texto plano"
-        case .docx: "Documento de Word"
+        case .txt: String(localized: "Plain text")
+        case .docx: String(localized: "Word document")
         case .md: "Markdown"
-        case .srt: "Subtítulos (SubRip)"
-        case .vtt: "Subtítulos web (WebVTT)"
+        case .srt: String(localized: "Subtitles (SubRip)")
+        case .vtt: String(localized: "Web subtitles (WebVTT)")
         }
     }
 
@@ -31,7 +31,7 @@ enum ExportFormat: String, CaseIterable, Identifiable {
 }
 
 enum Exporter {
-    /// Párrafos para leer: une tramos cercanos para que el texto no quede troceado.
+    /// Reading paragraphs: joins nearby segments so the text is not chopped up.
     static func paragraphs(_ segments: [Segment], kind: FileKind) -> [Segment] {
         guard !kind.isDocument else { return segments }
         var out: [Segment] = []
@@ -50,7 +50,7 @@ enum Exporter {
         return out
     }
 
-    /// Cues de subtítulos de hasta ~84 caracteres (2 líneas), con el tiempo repartido por longitud.
+    /// Subtitle cues of up to ~84 characters (2 lines), with time split by length.
     static func cues(_ segments: [Segment], maxChars: Int = 84) -> [Segment] {
         var out: [Segment] = []
         for seg in segments {
@@ -79,15 +79,17 @@ enum Exporter {
     }
 
     static func text(_ item: LibraryItem, timestamps: Bool) -> String {
-        paragraphs(item.segments, kind: item.kind).map { seg in
-            timestamps ? "[\(label(seg, kind: item.kind))] \(seg.text)" : seg.text
+        let stamped = timestamps && item.kind != .image
+        return paragraphs(item.segments, kind: item.kind).map { seg in
+            stamped ? "[\(label(seg, kind: item.kind))] \(seg.text)" : seg.text
         }.joined(separator: "\n\n")
     }
 
     static func markdown(_ item: LibraryItem, timestamps: Bool) -> String {
         var out = "# \(item.title)\n\n"
+        let stamped = timestamps && item.kind != .image
         for seg in paragraphs(item.segments, kind: item.kind) {
-            out += timestamps ? "**\(label(seg, kind: item.kind))** \(seg.text)\n\n" : "\(seg.text)\n\n"
+            out += stamped ? "**\(label(seg, kind: item.kind))** \(seg.text)\n\n" : "\(seg.text)\n\n"
         }
         return out
     }
@@ -119,7 +121,7 @@ enum Exporter {
             para.paragraphSpacing = 10
             doc.append(NSAttributedString(string: item.title + "\n\n", attributes: [.font: title]))
             for seg in paragraphs(item.segments, kind: item.kind) {
-                if timestamps {
+                if timestamps && item.kind != .image {
                     doc.append(NSAttributedString(string: label(seg, kind: item.kind) + "\n",
                                                   attributes: [.font: stamp, .foregroundColor: NSColor.gray]))
                 }
@@ -143,14 +145,14 @@ enum Exporter {
         }
     }
 
-    /// Un archivo por elemento en la carpeta elegida.
+    /// One file per item in the chosen folder.
     @MainActor
     static func saveAll(_ items: [LibraryItem], format: ExportFormat, timestamps: Bool) {
         let panel = NSOpenPanel()
         panel.canChooseDirectories = true
         panel.canChooseFiles = false
         panel.canCreateDirectories = true
-        panel.prompt = "Exportar aquí"
+        panel.prompt = String(localized: "Export Here")
         guard panel.runModal() == .OK, let folder = panel.url else { return }
         for item in items where !item.segments.isEmpty {
             let out = folder.appendingPathComponent(item.title).appendingPathExtension(format.rawValue)
@@ -159,8 +161,13 @@ enum Exporter {
         NSWorkspace.shared.activateFileViewerSelecting([folder])
     }
 
+    /// Timestamp, or page number for PDFs. Images have no position to show.
     static func label(_ seg: Segment, kind: FileKind) -> String {
-        kind == .pdf ? "Página \(Int(seg.start) + 1)" : seg.start.stamp
+        switch kind {
+        case .pdf: String(localized: "Page \(Int(seg.start) + 1)")
+        case .image: ""
+        case .audio, .video: seg.start.stamp
+        }
     }
 
     private static func time(_ t: TimeInterval, sep: String) -> String {
@@ -168,7 +175,7 @@ enum Exporter {
         return String(format: "%02d:%02d:%02d%@%03d", ms / 3_600_000, (ms / 60_000) % 60, (ms / 1000) % 60, sep, ms % 1000)
     }
 
-    /// Parte en dos líneas equilibradas si es largo.
+    /// Splits into two balanced lines when long.
     private static func wrap(_ text: String) -> String {
         guard text.count > 42 else { return text }
         let mid = text.index(text.startIndex, offsetBy: text.count / 2)

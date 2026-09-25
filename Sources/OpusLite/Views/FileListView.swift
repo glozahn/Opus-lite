@@ -35,16 +35,16 @@ struct FileListView: View {
 
     private var header: some View {
         HStack {
-            Text(library.filter == .all ? "Archivos" : library.filter.title)
+            Text(library.filter == .all ? String(localized: "Files") : library.filter.title)
                 .font(.headline)
             Spacer()
             if library.filter == .trash, library.count(.trash) > 0 {
-                Button("Vaciar papelera", role: .destructive) { library.emptyTrash() }
+                Button("Empty Trash", role: .destructive) { library.emptyTrash() }
                     .buttonStyle(.borderless)
                     .font(.callout)
             } else {
                 Menu {
-                    Picker("Ordenar", selection: $library.sort) {
+                    Picker("Sort", selection: $library.sort) {
                         ForEach(SortOrder.allCases) { Text($0.title).tag($0) }
                     }
                     .pickerStyle(.inline)
@@ -61,12 +61,12 @@ struct FileListView: View {
         .padding(.bottom, 8)
     }
 
-    /// Buscador propio de la columna: filtra esta lista y resalta en el texto.
+    /// The column's own search field: filters this list and highlights matches in the text.
     private var searchField: some View {
         HStack(spacing: 6) {
             Image(systemName: "magnifyingglass")
                 .foregroundStyle(.secondary)
-            TextField("Buscar archivos, transcripciones…", text: $library.search)
+            TextField("Search files, transcripts…", text: $library.search)
                 .textFieldStyle(.plain)
                 .focused($searchFocused)
                 .onExitCommand { library.search = ""; searchFocused = false }
@@ -76,7 +76,7 @@ struct FileListView: View {
                 }
                 .buttonStyle(.borderless)
                 .foregroundStyle(.secondary)
-                .help("Borrar búsqueda")
+                .help("Clear search")
             }
         }
         .padding(.horizontal, 10)
@@ -96,10 +96,10 @@ struct FileListView: View {
             Image(systemName: "square.and.arrow.up")
                 .font(.system(size: 20, weight: .regular))
                 .foregroundStyle(isTargeted ? Color.accentColor : .secondary)
-            Text("Arrastra archivos aquí")
+            Text("Drop files here")
                 .font(.callout)
                 .foregroundStyle(isTargeted ? Color.accentColor : .primary)
-            Text("Audio · Vídeo · PDF · Imágenes")
+            Text("Audio · Video · PDF · Images")
                 .font(.caption)
                 .foregroundStyle(.secondary)
         }
@@ -118,7 +118,7 @@ struct FileListView: View {
         .onTapGesture { library.importPanel() }
         .padding(.horizontal, 16)
         .padding(.bottom, 8)
-        .help("Haz clic para elegir archivos")
+        .help("Click to choose files")
     }
 
     @ViewBuilder private var emptyState: some View {
@@ -135,40 +135,40 @@ struct FileListView: View {
 
     private var emptyTitle: String {
         switch library.filter {
-        case .all, .recent: "Sin archivos"
-        case .favorites: "Sin favoritos"
-        case .processing: "Nada en proceso"
-        case .trash: "Papelera vacía"
+        case .all, .recent: String(localized: "No Files")
+        case .favorites: String(localized: "No Favorites")
+        case .processing: String(localized: "Nothing in Progress")
+        case .trash: String(localized: "Trash Is Empty")
         }
     }
 
     private var emptyDetail: String {
         switch library.filter {
-        case .all, .recent: "Arrastra notas de voz de WhatsApp, audios, vídeos, PDF o imágenes."
-        case .favorites: "Marca archivos con la estrella para tenerlos a mano."
-        case .processing: "Aquí verás la cola de transcripción y los errores."
-        case .trash: "Los archivos quitados aparecen aquí."
+        case .all, .recent: String(localized: "Drop WhatsApp voice notes, audio, video, PDFs or images.")
+        case .favorites: String(localized: "Star files to keep them handy.")
+        case .processing: String(localized: "The transcription queue and errors show up here.")
+        case .trash: String(localized: "Removed files show up here.")
         }
     }
 
     @ViewBuilder private func menu(for item: LibraryItem) -> some View {
         let ids = library.selection.contains(item.id) ? library.selection : [item.id]
         if item.trashed != nil {
-            Button("Restaurar") { library.restore(ids) }
-            Button("Quitar de la biblioteca", role: .destructive) { library.removeForever(ids) }
+            Button("Restore") { library.restore(ids) }
+            Button("Remove from Library", role: .destructive) { library.removeForever(ids) }
         } else {
-            Button(item.segments.isEmpty ? "Transcribir" : "Volver a transcribir") { library.enqueue(Array(ids)) }
+            Button(item.segments.isEmpty ? String(localized: "Transcribe") : String(localized: "Transcribe Again")) { library.enqueue(Array(ids)) }
                 .disabled(item.status.isActive)
             if item.status.isActive {
-                Button("Cancelar") { library.cancel(item.id) }
+                Button("Cancel") { library.cancel(item.id) }
             }
-            Button(item.favorite ? "Quitar de favoritos" : "Añadir a favoritos") { library.toggleFavorite(item.id) }
+            Button(item.favorite ? String(localized: "Remove from Favorites") : String(localized: "Add to Favorites")) { library.toggleFavorite(item.id) }
             Divider()
-            Button("Copiar texto") { library.copyText(item) }
+            Button("Copy Text") { library.copyText(item) }
                 .disabled(item.segments.isEmpty)
-            Button("Mostrar en Finder") { NSWorkspace.shared.activateFileViewerSelecting([item.url]) }
+            Button("Show in Finder") { NSWorkspace.shared.activateFileViewerSelecting([item.url]) }
             Divider()
-            Button("Mover a la papelera", role: .destructive) { library.trash(ids) }
+            Button("Move to Trash", role: .destructive) { library.trash(ids) }
         }
     }
 
@@ -214,8 +214,8 @@ struct FileRow: View {
     private var subtitle: String {
         var parts = [item.added.friendly]
         if item.duration > 0 { parts.append(item.duration.clock) }
-        if item.kind == .pdf, item.pages > 0 { parts.append("\(item.pages) pág.") }
-        if !item.fileExists { parts = ["Archivo no encontrado"] }
+        if item.kind == .pdf, item.pages > 0 { parts.append(String(localized: "\(item.pages) pp.")) }
+        if !item.fileExists { parts = [String(localized: "File not found")] }
         return parts.joined(separator: " · ")
     }
 
@@ -235,7 +235,7 @@ struct FileRow: View {
                     .frame(width: 38, alignment: .trailing)
             }
         case .queued:
-            Label("En espera", systemImage: "clock")
+            Label("Waiting", systemImage: "clock")
                 .font(.callout)
                 .foregroundStyle(.secondary)
         case .failed(let message):
@@ -249,10 +249,10 @@ struct FileRow: View {
                 }
                 .buttonStyle(.borderless)
                 .foregroundStyle(Color.accentColor)
-                .help("Reintentar")
+                .help("Retry")
             }
         case .pending:
-            Tag(text: item.kind.isDocument ? "OCR" : "Pendiente")
+            Tag(text: item.kind.isDocument ? "OCR" : String(localized: "Pending"))
         }
     }
 }

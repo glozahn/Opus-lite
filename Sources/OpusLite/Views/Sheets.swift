@@ -11,31 +11,31 @@ struct ExportSheet: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
-            Text(items.count > 1 ? "Exportar \(items.count) transcripciones" : "Exportar transcripción")
+            Text(items.count > 1 ? String(localized: "Export \(items.count) Transcripts") : String(localized: "Export Transcript"))
                 .font(.headline)
 
             Form {
-                Picker("Formato", selection: $library.exportFormat) {
+                Picker("Format", selection: $library.exportFormat) {
                     ForEach(ExportFormat.allCases) { f in
                         Text("\(f.title) — \(f.detail)").tag(f)
                     }
                 }
-                Toggle("Incluir marcas de tiempo", isOn: $timestamps)
+                Toggle("Include timestamps", isOn: $timestamps)
                     .disabled(library.exportFormat.isSubtitle)
             }
             .formStyle(.columns)
 
             if library.exportFormat.isSubtitle, items.contains(where: { $0.kind.isDocument }) {
-                Label("Los documentos no tienen tiempos; se exportan igualmente.", systemImage: "info.circle")
+                Label("Documents have no timings; they are exported anyway.", systemImage: "info.circle")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
             HStack {
                 Spacer()
-                Button("Cancelar") { dismiss() }
+                Button("Cancel") { dismiss() }
                     .keyboardShortcut(.cancelAction)
-                Button("Guardar…") {
+                Button("Save…") {
                     dismiss()
                     let format = library.exportFormat
                     let ts = timestamps
@@ -65,7 +65,7 @@ struct RecordSheet: View {
 
     var body: some View {
         VStack(spacing: 20) {
-            Text("Grabar nota de voz").font(.headline)
+            Text("Record voice note").font(.headline)
 
             HStack(alignment: .center, spacing: 3) {
                 ForEach(Array(recorder.levels.enumerated()), id: \.offset) { _, level in
@@ -88,7 +88,7 @@ struct RecordSheet: View {
             }
 
             HStack(spacing: 12) {
-                Button("Descartar", role: .destructive) {
+                Button("Discard", role: .destructive) {
                     recorder.discard()
                     dismiss()
                 }
@@ -98,7 +98,7 @@ struct RecordSheet: View {
                     if let url = recorder.stop() { library.add([url]) }
                     dismiss()
                 } label: {
-                    Label("Detener y transcribir", systemImage: "stop.fill")
+                    Label("Stop and Transcribe", systemImage: "stop.fill")
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(.red)

@@ -2,8 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <key>CFBundleDevelopmentRegion</key><string>es</string>
-    <key>CFBundleLocalizations</key><array><string>es</string></array>
+    <key>CFBundleDevelopmentRegion</key><string>en</string>
+    <key>CFBundleLocalizations</key><array><string>en</string><string>es</string></array>
     <key>CFBundleName</key><string>Opus Lite</string>
     <key>CFBundleDisplayName</key><string>Opus Lite</string>
     <key>CFBundleIdentifier</key><string>dev.loza.opuslite</string>
@@ -16,9 +16,9 @@
     <key>LSApplicationCategoryType</key><string>public.app-category.productivity</string>
     <key>NSHighResolutionCapable</key><true/>
     <key>NSSpeechRecognitionUsageDescription</key>
-    <string>Opus Lite transcribe tus audios localmente, sin enviarlos a internet.</string>
+    <string>Opus Lite transcribes your audio on this Mac, without sending it anywhere.</string>
     <key>NSMicrophoneUsageDescription</key>
-    <string>Opus Lite graba notas de voz para transcribirlas en este Mac.</string>
+    <string>Opus Lite records voice notes to transcribe them on this Mac.</string>
     <key>CFBundleDocumentTypes</key>
     <array>
         <dict>

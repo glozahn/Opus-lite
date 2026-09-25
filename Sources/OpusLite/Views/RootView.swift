@@ -26,19 +26,19 @@ struct RootView: View {
 
     @ToolbarContentBuilder private var toolbar: some ToolbarContent {
         ToolbarItemGroup(placement: .navigation) {
-            Button("Importar", systemImage: "plus") { library.importPanel() }
+            Button("Import", systemImage: "plus") { library.importPanel() }
                 .labelStyle(.titleAndIcon)
-                .help("Importar archivos (⌘O)")
-            Button("Grabar", systemImage: "mic") { showRecorder = true }
+                .help("Import files (⌘O)")
+            Button("Record", systemImage: "mic") { showRecorder = true }
                 .labelStyle(.titleAndIcon)
-                .help("Grabar nota de voz (⇧⌘N)")
+                .help("Record voice note (⇧⌘N)")
         }
         ToolbarItem(placement: .primaryAction) {
             HStack(spacing: 6) {
                 Image(systemName: isLight ? "sun.max.fill" : "moon.fill")
                     .foregroundStyle(isLight ? .orange : .secondary)
                     .frame(width: 16)
-                Toggle("Modo claro", isOn: Binding(
+                Toggle("Light mode", isOn: Binding(
                     get: { isLight },
                     set: { library.appearance = $0 ? .light : .dark }
                 ))
@@ -47,24 +47,24 @@ struct RootView: View {
                 .labelsHidden()
             }
             .padding(.horizontal, 4)
-            .help("Modo claro / oscuro")
+            .help("Light / dark mode")
         }
         ToolbarItem(placement: .primaryAction) {
             if library.isProcessing {
-                Button("Detener", systemImage: "stop.fill") { library.cancelAll() }
+                Button("Stop", systemImage: "stop.fill") { library.cancelAll() }
                     .labelStyle(.titleAndIcon)
-                    .help("Detener la cola (⌘.)")
+                    .help("Stop the queue (⌘.)")
             } else {
-                Button("Transcribir", systemImage: "waveform") { library.transcribeSelection() }
+                Button("Transcribe", systemImage: "waveform") { library.transcribeSelection() }
                     .labelStyle(.titleAndIcon)
                     .buttonStyle(.borderedProminent)
                     .disabled(!canTranscribe)
-                    .help("Transcribir selección (⌘R)")
+                    .help("Transcribe selection (⌘R)")
             }
         }
         ToolbarItem(placement: .primaryAction) {
-            Button("Opciones", systemImage: "sidebar.right") { showInspector.toggle() }
-                .help("Mostrar opciones (⌥⌘I)")
+            Button("Options", systemImage: "sidebar.right") { showInspector.toggle() }
+                .help("Show options (⌥⌘I)")
         }
     }
 

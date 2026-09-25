@@ -1,7 +1,7 @@
 import AVFoundation
 import Observation
 
-/// Reproductor del elemento seleccionado, con posición observable para la UI.
+/// Player for the selected item, with an observable position for the UI.
 @MainActor
 @Observable
 final class Player {
@@ -96,7 +96,7 @@ final class Player {
         seek(to: currentTime + delta)
     }
 
-    /// Salta a un tramo del texto y reproduce.
+    /// Jumps to a point in the text and plays.
     func play(from time: TimeInterval) {
         seek(to: time)
         play()

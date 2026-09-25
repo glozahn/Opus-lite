@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Recibe todos los archivos de "Abrir con" (onOpenURL solo entrega el primero).
+/// Receives every file from "Open With" (onOpenURL only delivers the first).
 final class AppDelegate: NSObject, NSApplicationDelegate {
     var onOpen: (([URL]) -> Void)?
     private var pending: [URL] = []
@@ -43,40 +43,40 @@ struct OpusLiteApp: App {
         .windowToolbarStyle(.unified)
         .commands {
             CommandGroup(replacing: .newItem) {
-                Button("Importar…") { library.importPanel() }
+                Button("Import…") { library.importPanel() }
                     .keyboardShortcut("o")
-                Button("Grabar nota de voz…") { showRecorder = true }
+                Button("Record Voice Note…") { showRecorder = true }
                     .keyboardShortcut("n", modifiers: [.command, .shift])
             }
             CommandGroup(after: .textEditing) {
-                Button("Buscar") { NotificationCenter.default.post(name: .focusSearch, object: nil) }
+                Button("Search") { NotificationCenter.default.post(name: .focusSearch, object: nil) }
                     .keyboardShortcut("f")
             }
             CommandGroup(after: .importExport) {
-                Button("Exportar…") { showExport = true }
+                Button("Export…") { showExport = true }
                     .keyboardShortcut("e")
                     .disabled(!library.selectedItems.contains { !$0.segments.isEmpty })
             }
-            CommandMenu("Transcripción") {
-                Button("Transcribir") { library.transcribeSelection() }
+            CommandMenu("Transcript") {
+                Button("Transcribe") { library.transcribeSelection() }
                     .keyboardShortcut("r")
-                Button("Detener") { library.cancelAll() }
+                Button("Stop") { library.cancelAll() }
                     .keyboardShortcut(".")
                     .disabled(!library.isProcessing)
                 Divider()
-                Button("Copiar texto") { library.selectedItem.map(library.copyText) }
+                Button("Copy Text") { library.selectedItem.map(library.copyText) }
                     .keyboardShortcut("c", modifiers: [.command, .shift])
                     .disabled(library.selectedItem?.segments.isEmpty ?? true)
-                Button("Reproducir / pausa") { player.toggle() }
+                Button("Play / Pause") { player.toggle() }
                     .keyboardShortcut(.space, modifiers: .option)
                     .disabled(player.duration == 0)
                 Divider()
-                Button("Mover a la papelera") { library.trash(library.selection) }
+                Button("Move to Trash") { library.trash(library.selection) }
                     .keyboardShortcut(.delete, modifiers: .command)
                     .disabled(library.selection.isEmpty)
             }
             CommandGroup(after: .sidebar) {
-                Button(showInspector ? "Ocultar opciones" : "Mostrar opciones") { showInspector.toggle() }
+                Button(showInspector ? String(localized: "Hide Options") : String(localized: "Show Options")) { showInspector.toggle() }
                     .keyboardShortcut("i", modifiers: [.command, .option])
             }
         }
@@ -86,7 +86,7 @@ struct OpusLiteApp: App {
         }
     }
 
-    /// SwiftUI abre la ventana al tamaño mínimo y no recuerda el último: se guarda con autosave propio.
+    /// SwiftUI opens the window at its minimum size and forgets the last one, so autosave it ourselves.
     private func restoreWindowFrame() {
         DispatchQueue.main.async {
             guard let window = NSApp.windows.first(where: { $0.isVisible && $0.canBecomeMain }) else { return }

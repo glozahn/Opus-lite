@@ -8,10 +8,10 @@ struct SettingsView: View {
     var body: some View {
         TabView {
             Tab("General", systemImage: "gearshape") { GeneralSettings(library: library) }
-            Tab("Modelos", systemImage: "cpu") { ModelSettings(library: library) }
-            Tab("Privacidad", systemImage: "lock") { PrivacySettings() }
-            Tab("Atajos", systemImage: "keyboard") { ShortcutSettings() }
-            Tab("Acerca de", systemImage: "info.circle") { AboutSettings(library: library) }
+            Tab("Models", systemImage: "cpu") { ModelSettings(library: library) }
+            Tab("Privacy", systemImage: "lock") { PrivacySettings() }
+            Tab("Shortcuts", systemImage: "keyboard") { ShortcutSettings() }
+            Tab("About", systemImage: "info.circle") { AboutSettings(library: library) }
         }
         .frame(width: 540, height: 400)
     }
@@ -22,17 +22,48 @@ private struct GeneralSettings: View {
 
     var body: some View {
         Form {
-            Picker("Apariencia", selection: $library.appearance) {
+            Picker("Appearance", selection: $library.appearance) {
                 ForEach(Appearance.allCases) { Text($0.title).tag($0) }
             }
             .pickerStyle(.segmented)
-            Toggle("Transcribir automáticamente al importar", isOn: $library.autoTranscribe)
-            Toggle("Mostrar marcas de tiempo", isOn: $library.showTimestamps)
-            Picker("Formato de exportación", selection: $library.exportFormat) {
+            LanguagePicker()
+            Toggle("Transcribe automatically on import", isOn: $library.autoTranscribe)
+            Toggle("Show timestamps", isOn: $library.showTimestamps)
+            Picker("Export format", selection: $library.exportFormat) {
                 ForEach(ExportFormat.allCases) { Text("\($0.title) — \($0.detail)").tag($0) }
             }
         }
         .formStyle(.grouped)
+    }
+}
+
+/// Interface language: System follows macOS; a change applies after relaunching.
+private struct LanguagePicker: View {
+    @State private var language = AppLanguage.current
+    @State private var initial = AppLanguage.current
+
+    var body: some View {
+        Picker("Language", selection: $language) {
+            ForEach(AppLanguage.allCases) { Text($0.title).tag($0) }
+        }
+        .onChange(of: language) { _, value in value.apply() }
+        if language != initial {
+            HStack {
+                Text("Restart Opus Lite to change the language.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+                Spacer()
+                Button("Restart Now") { relaunch() }
+            }
+        }
+    }
+
+    private func relaunch() {
+        let config = NSWorkspace.OpenConfiguration()
+        config.createsNewApplicationInstance = true
+        NSWorkspace.shared.openApplication(at: Bundle.main.bundleURL, configuration: config) { _, _ in
+            DispatchQueue.main.async { NSApp.terminate(nil) }
+        }
     }
 }
 
@@ -44,20 +75,20 @@ private struct ModelSettings: View {
     var body: some View {
         Form {
             Section {
-                Picker("Motor predeterminado", selection: $library.engine) {
+                Picker("Default engine", selection: $library.engine) {
                     ForEach(Engine.allCases) { Text($0.title).tag($0) }
                 }
-                Text("Los modelos son del sistema: no ocupan espacio en la app y funcionan sin internet.")
+                Text("Models belong to the system: they take no space in the app and work offline.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
-            Section("Idiomas") {
+            Section("Languages") {
                 ForEach(library.locales, id: \.identifier) { loc in
                     HStack {
                         Text(library.localeName(loc.identifier))
                         Spacer()
                         if library.installedLocales.contains(loc.identifier) {
-                            Label("Descargado", systemImage: "checkmark.circle.fill")
+                            Label("Downloaded", systemImage: "checkmark.circle.fill")
                                 .foregroundStyle(.green)
                                 .font(.callout)
                         } else if let p = downloading[loc.identifier] {
@@ -66,7 +97,7 @@ private struct ModelSettings: View {
                                 .font(.callout.monospacedDigit())
                                 .frame(width: 40)
                         } else {
-                            Button("Descargar") { download(loc) }
+                            Button("Download") { download(loc) }
                                 .controlSize(.small)
                         }
                     }
@@ -104,22 +135,22 @@ private struct PrivacySettings: View {
     var body: some View {
         Form {
             Section {
-                Label("Todo se procesa en este Mac", systemImage: "lock.shield.fill")
+                Label("Everything is processed on this Mac", systemImage: "lock.shield.fill")
                     .font(.headline)
                     .foregroundStyle(.green)
-                Text("Opus Lite no envía audio, texto ni estadísticas a ningún servidor. La transcripción usa los modelos de voz de macOS y el OCR usa Vision, ambos locales.")
+                Text("Opus Lite sends no audio, text or analytics to any server. Transcription uses the macOS speech models and OCR uses Vision, both on device.")
                     .foregroundStyle(.secondary)
             }
-            Section("Permisos") {
-                row("Reconocimiento de voz", granted: speech == .authorized,
-                    note: "Solo lo usa el motor SFSpeech clásico.")
-                row("Micrófono", granted: mic == .granted, note: "Para grabar notas de voz.")
-                Button("Abrir Ajustes de privacidad…") {
+            Section("Permissions") {
+                row("Speech Recognition", granted: speech == .authorized,
+                    note: String(localized: "Only used by the classic SFSpeech engine."))
+                row("Microphone", granted: mic == .granted, note: String(localized: "To record voice notes."))
+                Button("Open Privacy Settings…") {
                     NSWorkspace.shared.open(URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy")!)
                 }
             }
-            Section("Datos") {
-                Button("Mostrar carpeta de la biblioteca") {
+            Section("Data") {
+                Button("Show Library Folder") {
                     NSWorkspace.shared.open(Recorder.folder.deletingLastPathComponent())
                 }
             }
@@ -127,14 +158,14 @@ private struct PrivacySettings: View {
         .formStyle(.grouped)
     }
 
-    private func row(_ title: String, granted: Bool, note: String) -> some View {
+    private func row(_ title: LocalizedStringKey, granted: Bool, note: String) -> some View {
         HStack {
             VStack(alignment: .leading) {
                 Text(title)
                 Text(note).font(.caption).foregroundStyle(.secondary)
             }
             Spacer()
-            Text(granted ? "Permitido" : "Sin decidir o denegado")
+            Text(granted ? String(localized: "Allowed") : String(localized: "Not decided or denied"))
                 .foregroundStyle(granted ? .green : .secondary)
                 .font(.callout)
         }
@@ -142,22 +173,22 @@ private struct PrivacySettings: View {
 }
 
 private struct ShortcutSettings: View {
-    private let shortcuts: [(String, String)] = [
-        ("Importar archivos", "⌘O"),
-        ("Grabar nota de voz", "⇧⌘N"),
-        ("Transcribir selección", "⌘R"),
-        ("Cancelar", "⌘."),
-        ("Exportar", "⌘E"),
-        ("Copiar texto", "⇧⌘C"),
-        ("Reproducir / pausa", "⌥ Espacio"),
-        ("Buscar", "⌘F"),
-        ("Mostrar opciones", "⌥⌘I"),
-        ("Mover a la papelera", "⌫"),
+    private let shortcuts: [(LocalizedStringKey, String)] = [
+        ("Import files", "⌘O"),
+        ("Record voice note", "⇧⌘N"),
+        ("Transcribe selection", "⌘R"),
+        ("Cancel", "⌘."),
+        ("Export", "⌘E"),
+        ("Copy Text", "⇧⌘C"),
+        ("Play / Pause", "⌥ Space"),
+        ("Search", "⌘F"),
+        ("Show Options", "⌥⌘I"),
+        ("Move to Trash", "⌘⌫"),
     ]
 
     var body: some View {
         Form {
-            ForEach(shortcuts, id: \.0) { name, keys in
+            ForEach(shortcuts, id: \.1) { name, keys in
                 HStack {
                     Text(name)
                     Spacer()
@@ -182,21 +213,21 @@ private struct AboutSettings: View {
                 .resizable()
                 .frame(width: 88, height: 88)
             Text("Opus Lite").font(.title2.weight(.semibold))
-            Text("Versión \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "–")")
+            Text("Version \(Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "–")")
                 .foregroundStyle(.secondary)
-            Text("Audio, vídeo y documentos a texto. Nativo, ligero y privado.")
+            Text("Audio, video and documents to text. Native, light and private.")
                 .multilineTextAlignment(.center)
             HStack(spacing: 18) {
-                stat("\(library.items.count)", "archivos")
-                stat("\(library.items.reduce(0) { $0 + $1.wordCount })", "palabras")
-                stat(library.items.reduce(0) { $0 + $1.duration }.clock, "de audio")
+                stat("\(library.items.count)", "files")
+                stat("\(library.items.reduce(0) { $0 + $1.wordCount })", "words")
+                stat(library.items.reduce(0) { $0 + $1.duration }.clock, "of audio")
             }
             .padding(.top, 6)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
-    private func stat(_ value: String, _ label: String) -> some View {
+    private func stat(_ value: String, _ label: LocalizedStringKey) -> some View {
         VStack {
             Text(value).font(.title3.monospacedDigit().weight(.semibold))
             Text(label).font(.caption).foregroundStyle(.secondary)

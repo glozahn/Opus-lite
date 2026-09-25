@@ -1,5 +1,5 @@
 #!/bin/zsh
-# Regenera Resources/AppIcon.icns a partir de Tools/make_icon.swift.
+# Regenerates Resources/AppIcon.icns from Tools/make_icon.swift.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 swift Tools/make_icon.swift

@@ -1,8 +1,8 @@
 import AVFoundation
 import Speech
 
-/// Motores de transcripción. Todos corren en el Mac y usan modelos del sistema:
-/// la app no incluye pesos propios.
+/// Transcription engines. All run on the Mac with system models:
+/// the app ships no model weights of its own.
 enum Engine: String, CaseIterable, Identifiable, Codable, Sendable {
     case speech, dictation, legacy
 
@@ -11,16 +11,16 @@ enum Engine: String, CaseIterable, Identifiable, Codable, Sendable {
     var title: String {
         switch self {
         case .speech: "SpeechAnalyzer"
-        case .dictation: "Dictado"
-        case .legacy: "SFSpeech clásico"
+        case .dictation: String(localized: "Dictation")
+        case .legacy: String(localized: "Classic SFSpeech")
         }
     }
 
     var detail: String {
         switch self {
-        case .speech: "El más rápido y preciso. Recomendado."
-        case .dictation: "Modelo de dictado; buena puntuación."
-        case .legacy: "Reconocedor anterior. Más lento, respaldo."
+        case .speech: String(localized: "Fastest and most accurate. Recommended.")
+        case .dictation: String(localized: "Dictation model with good punctuation.")
+        case .legacy: String(localized: "Previous recognizer. Slower; a fallback.")
         }
     }
 }
@@ -33,10 +33,10 @@ enum TranscriptionError: LocalizedError {
 
     var errorDescription: String? {
         switch self {
-        case .unsupportedLocale(let id): "El idioma \(id) no está disponible para este motor."
-        case .notAuthorized: "Permiso de reconocimiento de voz denegado (Ajustes del Sistema › Privacidad)."
-        case .recognizerUnavailable: "El reconocedor no está disponible ahora mismo."
-        case .noAudioTrack: "El archivo no tiene pista de audio."
+        case .unsupportedLocale(let id): String(localized: "The language \(id) is not available for this engine.")
+        case .notAuthorized: String(localized: "Speech recognition permission denied (System Settings › Privacy).")
+        case .recognizerUnavailable: String(localized: "The recognizer is not available right now.")
+        case .noAudioTrack: String(localized: "The file has no audio track.")
         }
     }
 }
@@ -53,7 +53,7 @@ enum Transcriber {
         Set(await SpeechTranscriber.installedLocales.map(\.identifier))
     }
 
-    /// Descarga (si falta) el modelo de idioma del sistema.
+    /// Downloads the system language model if it is missing.
     static func installModel(for locale: Locale, progress: Progress? = nil) async throws {
         guard let loc = await SpeechTranscriber.supportedLocale(equivalentTo: locale) else {
             throw TranscriptionError.unsupportedLocale(locale.identifier)
@@ -62,7 +62,7 @@ enum Transcriber {
         try await install(module, progress: progress)
     }
 
-    /// Transcribe el audio de `url` en segmentos con tiempos.
+    /// Transcribes the audio at `url` into timed segments.
     static func run(
         url: URL,
         duration: TimeInterval,
@@ -168,7 +168,7 @@ enum Transcriber {
         return try await collector.value
     }
 
-    // MARK: - SFSpeechRecognizer (clásico)
+    // MARK: - SFSpeechRecognizer (classic)
 
     private static func legacy(
         url: URL,
@@ -185,7 +185,7 @@ enum Transcriber {
             throw TranscriptionError.recognizerUnavailable
         }
 
-        // SFSpeech no lee Ogg/Opus: se pasa a WAV PCM temporal.
+        // SFSpeech cannot read Ogg/Opus: convert to a temporary PCM WAV.
         let wav = try pcmCopy(of: url)
         defer { try? FileManager.default.removeItem(at: wav) }
 
@@ -202,8 +202,8 @@ enum Transcriber {
                 let chunks = ChunkAccumulator()
                 box.task = recognizer.recognitionTask(with: request) { result, error in
                     if let result {
-                        // On-device, la transcripción se reinicia tras cada pausa; el resultado
-                        // que cierra cada tramo trae metadata y tiempos reales.
+                        // On device, the transcription restarts after each pause; the result
+                        // that closes each utterance carries metadata and real timings.
                         let segs = result.bestTranscription.segments
                         let segments = chunks.update(
                             result.bestTranscription.formattedString,
@@ -257,8 +257,8 @@ private final class TaskBox: @unchecked Sendable {
     var task: SFSpeechRecognitionTask?
 }
 
-/// Une los tramos que SFSpeech entrega por separado en audios largos.
-/// Cada tramo termina con un resultado que trae `speechRecognitionMetadata`.
+/// Joins the utterances SFSpeech delivers separately for long audio.
+/// Each utterance ends with a result that carries `speechRecognitionMetadata`.
 private final class ChunkAccumulator: @unchecked Sendable {
     private let lock = NSLock()
     private var committed: [Segment] = []
@@ -280,7 +280,7 @@ private final class ChunkAccumulator: @unchecked Sendable {
             if !text.isEmpty { committed.append(Segment(start: start, end: end, text: text)) }
             partial = nil
         } else {
-            // Los parciales llegan sin tiempos: se colocan tras el último tramo cerrado.
+            // Partial results carry no timings: place them after the last closed utterance.
             let at = committed.last?.end ?? 0
             partial = Segment(start: at, end: at, text: text)
         }

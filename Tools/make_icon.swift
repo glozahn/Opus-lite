@@ -1,4 +1,4 @@
-// Genera Resources/AppIcon.icns. Uso: swift Tools/make_icon.swift
+// Draws Resources/AppIcon.png. Run Tools/make_icon.sh to build the .icns.
 import AppKit
 
 let size: CGFloat = 1024
@@ -7,7 +7,7 @@ let ctx = CGContext(data: nil, width: Int(size), height: Int(size), bitsPerCompo
                     bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
 let rgb = { (r: CGFloat, g: CGFloat, b: CGFloat, a: CGFloat) in CGColor(srgbRed: r / 255, green: g / 255, blue: b / 255, alpha: a) }
 
-// Cuerpo tipo squircle (rejilla de iconos macOS: 824 px con margen de 100).
+// Squircle body (macOS icon grid: 824 px with a 100 px margin).
 let body = CGRect(x: 100, y: 100, width: 824, height: 824)
 let bodyPath = CGPath(roundedRect: body, cornerWidth: 185, cornerHeight: 185, transform: nil)
 ctx.saveGState()
@@ -19,12 +19,12 @@ ctx.saveGState()
 ctx.addPath(bodyPath); ctx.clip()
 let bg = CGGradient(colorsSpace: nil, colors: [rgb(52, 222, 124, 1), rgb(7, 94, 84, 1)] as CFArray, locations: [0, 1])!
 ctx.drawLinearGradient(bg, start: CGPoint(x: 200, y: 924), end: CGPoint(x: 824, y: 100), options: [])
-// Brillo superior.
+// Top gloss.
 let gloss = CGGradient(colorsSpace: nil, colors: [rgb(255, 255, 255, 0.18), rgb(255, 255, 255, 0)] as CFArray, locations: [0, 1])!
 ctx.drawLinearGradient(gloss, start: CGPoint(x: 512, y: 924), end: CGPoint(x: 512, y: 560), options: [])
 ctx.restoreGState()
 
-// Globo de chat con cola abajo a la izquierda.
+// Chat bubble with its tail at the bottom left.
 let bubble = CGRect(x: 215, y: 330, width: 594, height: 420)
 let bubblePath = CGMutablePath()
 bubblePath.addRoundedRect(in: bubble, cornerWidth: 130, cornerHeight: 130)
@@ -37,7 +37,7 @@ ctx.setShadow(offset: CGSize(width: 0, height: -10), blur: 24, color: rgb(0, 40,
 ctx.addPath(bubblePath); ctx.setFillColor(rgb(255, 255, 255, 1)); ctx.fillPath()
 ctx.restoreGState()
 
-// Ondas (izquierda) que se convierten en líneas de texto (derecha).
+// Waveform (left) turning into lines of text (right).
 let midY = bubble.midY
 let green = rgb(18, 170, 110, 1)
 let bars: [CGFloat] = [70, 150, 220, 130, 190, 90]
@@ -47,7 +47,7 @@ for (i, h) in bars.enumerated() {
     ctx.addPath(CGPath(roundedRect: r, cornerWidth: 12, cornerHeight: 12, transform: nil))
     ctx.setFillColor(green); ctx.fillPath()
 }
-// Flecha sutil.
+// Subtle arrow.
 ctx.setFillColor(rgb(18, 170, 110, 0.45))
 ctx.move(to: CGPoint(x: 548, y: midY + 26)); ctx.addLine(to: CGPoint(x: 574, y: midY)); ctx.addLine(to: CGPoint(x: 548, y: midY - 26)); ctx.fillPath()
 let lines: [(CGFloat, CGFloat)] = [(midY + 70, 150), (midY, 150), (midY - 70, 100)]

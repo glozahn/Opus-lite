@@ -1,4 +1,5 @@
 import AVFoundation
+import Speech
 import AppKit
 import Observation
 
@@ -9,14 +10,43 @@ enum Appearance: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .system: "Sistema"
-        case .light: "Claro"
-        case .dark: "Oscuro"
+        case .system: String(localized: "System")
+        case .light: String(localized: "Light")
+        case .dark: String(localized: "Dark")
         }
     }
 }
 
-/// Estado de la app: biblioteca persistente, cola de procesamiento y preferencias.
+/// Interface language. "System" follows the macOS language list.
+enum AppLanguage: String, CaseIterable, Identifiable {
+    case system, en, es
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .system: String(localized: "System")
+        case .en: "English"
+        case .es: "Español"
+        }
+    }
+
+    static var current: AppLanguage {
+        guard let saved = UserDefaults.standard.persistentDomain(forName: Bundle.main.bundleIdentifier ?? "")?["AppleLanguages"] as? [String],
+              let first = saved.first else { return .system }
+        return first.hasPrefix("es") ? .es : .en
+    }
+
+    /// Stored in the app's AppleLanguages default; takes effect on the next launch.
+    func apply() {
+        switch self {
+        case .system: UserDefaults.standard.removeObject(forKey: "AppleLanguages")
+        case .en, .es: UserDefaults.standard.set([rawValue], forKey: "AppleLanguages")
+        }
+    }
+}
+
+/// App state: persistent library, processing queue and preferences.
 @MainActor
 @Observable
 final class Library {
@@ -29,9 +59,10 @@ final class Library {
     var locales: [Locale] = []
     var installedLocales: Set<String> = []
 
-    // Preferencias
+    // Preferences
     var engine: Engine = .speech { didSet { defaults.set(engine.rawValue, forKey: "engine") } }
-    var localeID = "es_MX" { didSet { defaults.set(localeID, forKey: "locale") } }
+    /// Transcription language; defaults to the system language.
+    var localeID = Locale.current.identifier { didSet { defaults.set(localeID, forKey: "locale") } }
     var showTimestamps = true { didSet { defaults.set(showTimestamps, forKey: "timestamps") } }
     var autoTranscribe = true { didSet { defaults.set(autoTranscribe, forKey: "autoTranscribe") } }
     var exportFormat: ExportFormat = .txt { didSet { defaults.set(exportFormat.rawValue, forKey: "exportFormat") } }
@@ -65,7 +96,12 @@ final class Library {
         load()
         Task {
             await refreshInstalled()
-            // Descargados primero; luego por nombre en español.
+            // Map the system locale (e.g. en_MX) to one the engine supports.
+            if await Transcriber.supportedLocales().contains(where: { $0.identifier == localeID }) == false,
+               let match = await SpeechTranscriber.supportedLocale(equivalentTo: Locale(identifier: localeID)) {
+                localeID = match.identifier
+            }
+            // Downloaded first, then by localized name.
             let installed = installedLocales
             locales = await Transcriber.supportedLocales().sorted { a, b in
                 let ia = installed.contains(a.identifier), ib = installed.contains(b.identifier)
@@ -80,7 +116,7 @@ final class Library {
         }
     }
 
-    // MARK: - Consultas
+    // MARK: - Queries
 
     var visibleItems: [LibraryItem] {
         let query = search.trimmingCharacters(in: .whitespaces)
@@ -120,18 +156,20 @@ final class Library {
 
     var locale: Locale { Locale(identifier: localeID) }
 
+    /// Language name in the interface language.
     func localeName(_ id: String) -> String {
-        Locale(identifier: "es").localizedString(forIdentifier: id).map { $0.prefix(1).uppercased() + $0.dropFirst() } ?? id
+        let ui = Locale(identifier: Bundle.main.preferredLocalizations.first ?? "en")
+        return ui.localizedString(forIdentifier: id).map { $0.prefix(1).uppercased() + $0.dropFirst() } ?? id
     }
 
-    /// Idiomas para el OCR según el idioma elegido (y siempre inglés como apoyo).
+    /// OCR languages from the chosen language, with English as a fallback.
     var ocrLanguages: [String] {
         let lang = locale.language.languageCode?.identifier ?? "es"
         let region = locale.region?.identifier ?? ""
         return [region.isEmpty ? lang : "\(lang)-\(region)", lang, "en-US"]
     }
 
-    // MARK: - Importar
+    // MARK: - Import
 
     func add(_ urls: [URL]) {
         var files: [URL] = []
@@ -154,7 +192,7 @@ final class Library {
                 continue
             }
             guard let kind = FileKind.detect(url) else { continue }
-            // Orden estable: los nombres de WhatsApp llevan fecha, así que el último importado queda arriba.
+            // Stable order: WhatsApp names carry the date, so the last imported stays on top.
             var item = LibraryItem(path: path, added: Date().addingTimeInterval(Double(offset) * 0.001), kind: kind)
             item.pages = Media.pageCount(of: url, kind: kind)
             items.append(item)
@@ -181,11 +219,11 @@ final class Library {
         panel.allowsOtherFileTypes = true
         panel.allowsMultipleSelection = true
         panel.canChooseDirectories = true
-        panel.message = "Audio, vídeo, PDF o imágenes"
+        panel.message = String(localized: "Audio, video, PDF or images")
         if panel.runModal() == .OK { add(panel.urls) }
     }
 
-    // MARK: - Cola
+    // MARK: - Queue
 
     func transcribeSelection() {
         let targets = selectedItems.filter { !$0.status.isActive }
@@ -239,8 +277,8 @@ final class Library {
         let localeID = localeID
         let start = Date()
 
-        // La UI se refresca como mucho 4 veces por segundo: si cada resultado parcial
-        // esperara al hilo principal, el motor iría al ritmo de la interfaz.
+        // Refresh the UI at most 4 times a second: if every partial result waited
+        // for the main thread, the engine would run at the pace of the interface.
         let gate = Throttle(interval: 0.25)
         let partialGate = Throttle(interval: 0.25)
         let progress: @Sendable (Double) async -> Void = { [weak self] value in
@@ -291,18 +329,18 @@ final class Library {
         scheduleSave()
     }
 
-    /// Mensajes de CoreAudio/AVFoundation traducidos a algo comprensible.
+    /// CoreAudio/AVFoundation errors rewritten into something readable.
     private static func friendly(_ error: Error) -> String {
         if error is TranscriptionError { return error.localizedDescription }
         let ns = error as NSError
         if ns.domain.contains("coreaudio") || ns.domain.contains("avfaudio") || ns.domain == NSOSStatusErrorDomain
             || ns.domain == AVFoundationErrorDomain {
-            return "No se pudo leer el audio: el archivo está dañado o su formato no es compatible."
+            return String(localized: "Could not read the audio: the file is damaged or its format is not supported.")
         }
         return error.localizedDescription
     }
 
-    // MARK: - Organizar
+    // MARK: - Organize
 
     func toggleFavorite(_ id: UUID) {
         guard let i = binding(id) else { return }
@@ -324,7 +362,7 @@ final class Library {
         scheduleSave()
     }
 
-    /// Quita de la biblioteca. Solo borra archivos que creó la app (grabaciones y audio extraído).
+    /// Removes from the library. Only deletes files the app created (recordings and extracted audio).
     func removeForever(_ ids: Set<UUID>) {
         for id in ids {
             guard let item = item(id) else { continue }
@@ -340,7 +378,7 @@ final class Library {
         removeForever(Set(items.filter { $0.trashed != nil }.map(\.id)))
     }
 
-    /// Edición de un párrafo: los tramos que lo forman pasan a ser uno solo con el texto nuevo.
+    /// Editing a paragraph merges its source segments into one with the new text.
     func edit(_ id: UUID, paragraph: Segment, sources: [UUID], text: String) {
         guard let i = binding(id) else { return }
         var segs = items[i].segments
@@ -371,7 +409,7 @@ final class Library {
         }
     }
 
-    // MARK: - Persistencia
+    // MARK: - Persistence
 
     private func load() {
         guard let data = try? Data(contentsOf: Self.storeURL),
@@ -398,7 +436,7 @@ final class Library {
     }
 }
 
-/// Deja pasar como mucho una llamada por intervalo.
+/// Lets through at most one call per interval.
 final class Throttle: @unchecked Sendable {
     private let lock = NSLock()
     private let interval: TimeInterval

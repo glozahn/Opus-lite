@@ -1,7 +1,7 @@
 import Foundation
 import UniformTypeIdentifiers
 
-/// Tramo de texto con su posición en el audio (o página, en documentos).
+/// A piece of text with its position in the audio (or page, for documents).
 struct Segment: Codable, Hashable, Identifiable {
     var id = UUID()
     var start: TimeInterval
@@ -78,11 +78,11 @@ enum SidebarFilter: String, CaseIterable, Identifiable, Hashable {
 
     var title: String {
         switch self {
-        case .all: "Todos los archivos"
-        case .recent: "Recientes"
-        case .favorites: "Favoritos"
-        case .processing: "En proceso"
-        case .trash: "Papelera"
+        case .all: String(localized: "All Files")
+        case .recent: String(localized: "Recent")
+        case .favorites: String(localized: "Favorites")
+        case .processing: String(localized: "In Progress")
+        case .trash: String(localized: "Trash")
         }
     }
 
@@ -117,10 +117,10 @@ enum SortOrder: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
-        case .newest: "Más recientes"
-        case .oldest: "Más antiguos"
-        case .name: "Nombre"
-        case .duration: "Duración"
+        case .newest: String(localized: "Newest")
+        case .oldest: String(localized: "Oldest")
+        case .name: String(localized: "Name")
+        case .duration: String(localized: "Duration")
         }
     }
 }

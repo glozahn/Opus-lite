@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// Icono de tipo de archivo en baldosa de color, como en Finder/Música.
+/// File-type icon on a colored tile, like Finder/Music.
 struct KindTile: View {
     let item: LibraryItem
     var size: CGFloat = 40
@@ -31,7 +31,7 @@ struct KindTile: View {
     }
 }
 
-/// Etiqueta en cápsula ("OCR", "Pendiente"…).
+/// Capsule tag ("OCR", "Pending"…).
 struct Tag: View {
     let text: String
 
@@ -45,7 +45,7 @@ struct Tag: View {
     }
 }
 
-/// Resalta coincidencias de búsqueda dentro de un texto.
+/// Highlights search matches in a text.
 func highlighted(_ text: String, query: String) -> AttributedString {
     var out = AttributedString(text)
     let q = query.trimmingCharacters(in: .whitespaces)
@@ -60,12 +60,19 @@ func highlighted(_ text: String, query: String) -> AttributedString {
 }
 
 extension Date {
-    /// "Hoy, 17:09" · "Ayer, 20:15" · "12 sept, 09:30"
+    /// "Today, 17:09" · "Yesterday, 20:15" · "Sep 12, 09:30"
     var friendly: String {
         let cal = Calendar.current
         let time = formatted(date: .omitted, time: .shortened)
-        if cal.isDateInToday(self) { return "Hoy, \(time)" }
-        if cal.isDateInYesterday(self) { return "Ayer, \(time)" }
+        if cal.isDateInToday(self) { return String(localized: "Today, \(time)") }
+        if cal.isDateInYesterday(self) { return String(localized: "Yesterday, \(time)") }
         return formatted(.dateTime.day().month(.abbreviated)) + ", " + time
+    }
+
+    /// Same as `friendly`, lowercased for use inside a sentence ("Transcribed today, 17:09").
+    var friendlyInline: String {
+        let cal = Calendar.current
+        guard cal.isDateInToday(self) || cal.isDateInYesterday(self) else { return friendly }
+        return friendly.prefix(1).lowercased() + friendly.dropFirst()
     }
 }

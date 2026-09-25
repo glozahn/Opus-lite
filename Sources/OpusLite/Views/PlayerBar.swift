@@ -20,13 +20,13 @@ struct PlayerBar: View {
                 }
                 .buttonStyle(.plain)
                 .keyboardShortcut(.space, modifiers: .option)
-                .help(player.isPlaying ? "Pausa (⌥ Espacio)" : "Reproducir (⌥ Espacio)")
+                .help(player.isPlaying ? String(localized: "Pause (⌥ Space)") : String(localized: "Play (⌥ Space)"))
 
                 Button { player.skip(-15) } label: {
                     Image(systemName: "gobackward.15").font(.system(size: 18))
                 }
                 .buttonStyle(.borderless)
-                .help("Atrás 15 s")
+                .help("Back 15 s")
 
                 Text("\(player.currentTime.clock) / \(player.duration.clock)")
                     .font(.callout.monospacedDigit())
@@ -37,12 +37,12 @@ struct PlayerBar: View {
                     Image(systemName: "goforward.15").font(.system(size: 18))
                 }
                 .buttonStyle(.borderless)
-                .help("Adelante 15 s")
+                .help("Forward 15 s")
 
                 Spacer()
 
                 Menu {
-                    Picker("Velocidad", selection: $player.rate) {
+                    Picker("Speed", selection: $player.rate) {
                         ForEach([0.75, 1, 1.25, 1.5, 2] as [Float], id: \.self) { r in
                             Text(r.formatted() + "×").tag(r)
                         }
@@ -53,7 +53,7 @@ struct PlayerBar: View {
                 }
                 .menuStyle(.button)
                 .fixedSize()
-                .help("Velocidad")
+                .help("Speed")
 
                 HStack(spacing: 6) {
                     Image(systemName: player.volume == 0 ? "speaker.slash.fill" : "speaker.wave.2.fill")
@@ -75,7 +75,7 @@ struct PlayerBar: View {
     }
 }
 
-/// Barras de la forma de onda; la parte reproducida en color. Clic o arrastre para buscar.
+/// Waveform bars; the played part in color. Click or drag to seek.
 struct WaveformView: View {
     let samples: [Float]
     let progress: Double
