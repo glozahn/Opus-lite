@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key><string>es</string>
+    <key>CFBundleLocalizations</key><array><string>es</string></array>
+    <key>CFBundleName</key><string>Opus Lite</string>
+    <key>CFBundleDisplayName</key><string>Opus Lite</string>
+    <key>CFBundleIdentifier</key><string>dev.loza.opuslite</string>
+    <key>CFBundleExecutable</key><string>OpusLite</string>
+    <key>CFBundleIconFile</key><string>AppIcon</string>
+    <key>CFBundlePackageType</key><string>APPL</string>
+    <key>CFBundleShortVersionString</key><string>2.0</string>
+    <key>CFBundleVersion</key><string>2</string>
+    <key>LSMinimumSystemVersion</key><string>26.0</string>
+    <key>LSApplicationCategoryType</key><string>public.app-category.productivity</string>
+    <key>NSHighResolutionCapable</key><true/>
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>Opus Lite transcribe tus audios localmente, sin enviarlos a internet.</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Opus Lite graba notas de voz para transcribirlas en este Mac.</string>
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeName</key><string>Audio</string>
+            <key>CFBundleTypeRole</key><string>Viewer</string>
+            <key>LSHandlerRank</key><string>Alternate</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>public.audio</string>
+                <string>org.xiph.opus</string>
+                <string>org.xiph.ogg-audio</string>
+                <string>public.movie</string>
+                <string>com.adobe.pdf</string>
+                <string>public.image</string>
+            </array>
+            <key>CFBundleTypeExtensions</key>
+            <array><string>opus</string><string>ogg</string><string>oga</string></array>
+        </dict>
+    </array>
+</dict>
+</plist>
