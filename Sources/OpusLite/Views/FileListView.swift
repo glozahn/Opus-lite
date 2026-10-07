@@ -54,6 +54,21 @@ struct FileListView: View {
                 .menuStyle(.borderlessButton)
                 .fixedSize()
                 .foregroundStyle(.secondary)
+                Menu {
+                    Button("Remove Missing Files (\(library.missingCount))") { library.removeMissing() }
+                        .disabled(library.missingCount == 0)
+                    Divider()
+                    Button("Clear History…", role: .destructive) { library.confirmClearHistory() }
+                } label: {
+                    Label("Clear", systemImage: "trash")
+                        .labelStyle(.iconOnly)
+                }
+                .menuStyle(.borderlessButton)
+                .menuIndicator(.hidden)
+                .fixedSize()
+                .foregroundStyle(.secondary)
+                .help("Clear the history")
+                .disabled(library.items.isEmpty)
             }
         }
         .padding(.horizontal, 16)

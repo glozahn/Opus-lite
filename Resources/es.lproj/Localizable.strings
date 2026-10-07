@@ -229,3 +229,6 @@
 "Clear History…" = "Borrar historial…";
 "History" = "Historial";
 "%lld files and their transcripts" = "%lld archivos y sus transcripciones";
+"Remove Missing Files (%lld)" = "Quitar archivos que faltan (%lld)";
+"Clear" = "Limpiar";
+"Clear the history" = "Limpiar el historial";

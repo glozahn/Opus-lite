@@ -396,6 +396,13 @@ final class Library {
         clearHistory(deleteRecordings: box.state == .on)
     }
 
+    /// Library entries whose original file is gone (moved or deleted outside the app).
+    var missingCount: Int { items.filter { !$0.fileExists }.count }
+
+    func removeMissing() {
+        removeForever(Set(items.filter { !$0.fileExists }.map(\.id)))
+    }
+
     func clearHistory(deleteRecordings: Bool) {
         cancelAll()
         let recordings = items.filter { $0.path.hasPrefix(Recorder.folder.path) }
