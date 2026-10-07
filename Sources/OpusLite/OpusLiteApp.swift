@@ -100,6 +100,9 @@ struct OpusLiteApp: App {
                 Button("Move to Trash") { library.trash(library.selection) }
                     .keyboardShortcut(.delete, modifiers: .command)
                     .disabled(library.selection.isEmpty)
+                Button("Clear History…") { library.confirmClearHistory() }
+                    .keyboardShortcut(.delete, modifiers: [.command, .shift, .option])
+                    .disabled(library.items.isEmpty)
             }
             CommandGroup(after: .sidebar) {
                 Button(showInspector ? String(localized: "Hide Options") : String(localized: "Show Options")) { showInspector.toggle() }

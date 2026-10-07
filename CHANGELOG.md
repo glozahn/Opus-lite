@@ -16,6 +16,7 @@ Opus Lite checks GitHub Releases, downloads the new disk image in the background
 
 ### Also
 
+- Clear the whole history — files and transcripts — from *Settings ▸ Privacy* or *Transcript ▸ Clear History…* (⌥⇧⌘⌫). Original files are never touched.
 - *Help ▸ What's New* shows this changelog. It also opens once after an update.
 - Star the project on GitHub from the sidebar, *About* or the *Help* menu.
 - *Help ▸ Report an Issue* opens the issue tracker.

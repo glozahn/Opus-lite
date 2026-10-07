@@ -222,3 +222,10 @@
 "The downloaded disk image could not be opened." = "No se pudo abrir la imagen de disco descargada.";
 "The update is not signed by the same developer." = "La actualización no está firmada por el mismo desarrollador.";
 "The update is not notarized by Apple." = "La actualización no está notarizada por Apple.";
+"Clear the history?" = "¿Borrar el historial?";
+"This removes all %lld files and their transcripts from Opus Lite. Your original files stay where they are. This can't be undone." = "Se quitarán de Opus Lite los %lld archivos y sus transcripciones. Tus archivos originales se quedan donde están. No se puede deshacer.";
+"Also delete recordings made in Opus Lite" = "Borrar también las grabaciones hechas en Opus Lite";
+"Clear History" = "Borrar historial";
+"Clear History…" = "Borrar historial…";
+"History" = "Historial";
+"%lld files and their transcripts" = "%lld archivos y sus transcripciones";

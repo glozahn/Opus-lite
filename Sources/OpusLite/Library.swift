@@ -378,6 +378,38 @@ final class Library {
         removeForever(Set(items.filter { $0.trashed != nil }.map(\.id)))
     }
 
+    /// Asks, then forgets every file and transcript. Originals are never touched; recordings
+    /// made in Opus Lite are deleted only when the box is checked.
+    func confirmClearHistory() {
+        guard !items.isEmpty else { return }
+        let alert = NSAlert()
+        alert.alertStyle = .warning
+        alert.messageText = String(localized: "Clear the history?")
+        alert.informativeText = String(localized: "This removes all \(items.count) files and their transcripts from Opus Lite. Your original files stay where they are. This can't be undone.")
+        let box = NSButton(checkboxWithTitle: String(localized: "Also delete recordings made in Opus Lite"), target: nil, action: nil)
+        box.state = .off
+        alert.accessoryView = box
+        alert.addButton(withTitle: String(localized: "Clear History"))
+        alert.addButton(withTitle: String(localized: "Cancel"))
+        alert.buttons.first?.hasDestructiveAction = true
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+        clearHistory(deleteRecordings: box.state == .on)
+    }
+
+    func clearHistory(deleteRecordings: Bool) {
+        cancelAll()
+        let recordings = items.filter { $0.path.hasPrefix(Recorder.folder.path) }
+        if deleteRecordings {
+            for item in recordings { try? FileManager.default.removeItem(at: item.url) }
+        }
+        try? FileManager.default.removeItem(at: Media.cacheDir)
+        try? FileManager.default.createDirectory(at: Media.cacheDir, withIntermediateDirectories: true)
+        items.removeAll()
+        selection.removeAll()
+        search = ""
+        saveNow()
+    }
+
     /// Editing a paragraph merges its source segments into one with the new text.
     func edit(_ id: UUID, paragraph: Segment, sources: [UUID], text: String) {
         guard let i = binding(id) else { return }

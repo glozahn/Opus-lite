@@ -54,6 +54,7 @@ echo "Stapling…"
 xcrun stapler staple "$APP"
 xcrun stapler validate "$APP"
 package_dmg   # the final DMG carries the stapled app
-xcrun stapler staple "$DMG"
+# The repackaged DMG is not the one Apple saw, so this often finds no ticket; the app inside is stapled.
+xcrun stapler staple "$DMG" || echo "DMG not stapled (optional); the app inside is."
 spctl --assess --type exec -vv "$APP"
 echo "Done: $DMG"

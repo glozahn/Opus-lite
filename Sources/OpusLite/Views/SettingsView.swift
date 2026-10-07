@@ -10,7 +10,7 @@ struct SettingsView: View {
         TabView {
             Tab("General", systemImage: "gearshape") { GeneralSettings(library: library, association: association) }
             Tab("Models", systemImage: "cpu") { ModelSettings(library: library) }
-            Tab("Privacy", systemImage: "lock") { PrivacySettings() }
+            Tab("Privacy", systemImage: "lock") { PrivacySettings(library: library) }
             Tab("Shortcuts", systemImage: "keyboard") { ShortcutSettings() }
             Tab("About", systemImage: "info.circle") { AboutSettings(library: library) }
         }
@@ -165,6 +165,7 @@ private struct ModelSettings: View {
 }
 
 private struct PrivacySettings: View {
+    let library: Library
     @State private var speech = SFSpeechRecognizer.authorizationStatus()
     @State private var mic = AVAudioApplication.shared.recordPermission
 
@@ -188,6 +189,17 @@ private struct PrivacySettings: View {
             Section("Data") {
                 Button("Show Library Folder") {
                     NSWorkspace.shared.open(Recorder.folder.deletingLastPathComponent())
+                }
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("History")
+                        Text("\(library.items.count) files and their transcripts")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                    Button("Clear History…", role: .destructive) { library.confirmClearHistory() }
+                        .disabled(library.items.isEmpty)
                 }
             }
         }
