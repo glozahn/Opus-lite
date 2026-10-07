@@ -14,6 +14,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if !pending.isEmpty { handler(pending); pending = [] }
     }
 
+    func applicationDidFinishLaunching(_ notification: Notification) {
+        MainActor.assumeIsolated { Updater.shared.checkInBackground() }
+    }
+
+    func applicationDidBecomeActive(_ notification: Notification) {
+        MainActor.assumeIsolated { Updater.shared.checkInBackground() }
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        MainActor.assumeIsolated { Updater.shared.installOnQuit() }
+    }
+
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool { true }
 }
 
@@ -22,14 +34,17 @@ struct OpusLiteApp: App {
     @NSApplicationDelegateAdaptor private var delegate: AppDelegate
     @State private var library = Library()
     @State private var player = Player()
+    @State private var association = FileAssociation()
     @State private var showInspector = true
     @State private var showExport = false
     @State private var showRecorder = false
 
+    @Environment(\.openWindow) private var openWindow
+
     var body: some Scene {
         Window("Opus Lite", id: "main") {
             RootView(
-                library: library, player: player,
+                library: library, player: player, association: association,
                 showInspector: $showInspector, showExport: $showExport, showRecorder: $showRecorder
             )
             .frame(minWidth: 1240, minHeight: 660)
@@ -37,11 +52,22 @@ struct OpusLiteApp: App {
                 library.applyAppearance()
                 delegate.attach { library.add($0) }
                 restoreWindowFrame()
+                if Updater.shared.consumeJustUpdated() { openWindow(id: "changelog") }
             }
         }
         .defaultSize(width: 1380, height: 820)
         .windowToolbarStyle(.unified)
         .commands {
+            CommandGroup(after: .appInfo) {
+                Button("Check for Updates…") { Updater.shared.checkNow() }
+            }
+            CommandGroup(replacing: .help) {
+                Button("What's New") { openWindow(id: "changelog") }
+                Divider()
+                Link("Opus Lite on GitHub", destination: UpdateChecker.repositoryURL)
+                Link("Leave a Star on GitHub", destination: UpdateChecker.repositoryURL)
+                Link("Report an Issue", destination: UpdateChecker.issuesURL)
+            }
             CommandGroup(replacing: .newItem) {
                 Button("Import…") { library.importPanel() }
                     .keyboardShortcut("o")
@@ -82,8 +108,13 @@ struct OpusLiteApp: App {
         }
 
         Settings {
-            SettingsView(library: library)
+            SettingsView(library: library, association: association)
         }
+
+        Window("What's New", id: "changelog") {
+            ChangelogView()
+        }
+        .defaultSize(width: 620, height: 640)
     }
 
     /// SwiftUI opens the window at its minimum size and forgets the last one, so autosave it ourselves.

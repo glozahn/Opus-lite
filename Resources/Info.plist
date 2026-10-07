@@ -10,8 +10,8 @@
     <key>CFBundleExecutable</key><string>OpusLite</string>
     <key>CFBundleIconFile</key><string>AppIcon</string>
     <key>CFBundlePackageType</key><string>APPL</string>
-    <key>CFBundleShortVersionString</key><string>2.0</string>
-    <key>CFBundleVersion</key><string>3</string>
+    <key>CFBundleShortVersionString</key><string>2.1</string>
+    <key>CFBundleVersion</key><string>4</string>
     <key>LSMinimumSystemVersion</key><string>26.0</string>
     <key>LSApplicationCategoryType</key><string>public.app-category.productivity</string>
     <key>NSHighResolutionCapable</key><true/>
@@ -21,6 +21,16 @@
     <string>Opus Lite records voice notes to transcribe them on this Mac.</string>
     <key>CFBundleDocumentTypes</key>
     <array>
+        <dict>
+            <key>CFBundleTypeName</key><string>Voice Note</string>
+            <key>CFBundleTypeRole</key><string>Viewer</string>
+            <key>LSHandlerRank</key><string>Default</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>org.xiph.ogg-audio</string>
+                <string>org.xiph.opus</string>
+            </array>
+        </dict>
         <dict>
             <key>CFBundleTypeName</key><string>Audio</string>
             <key>CFBundleTypeRole</key><string>Viewer</string>

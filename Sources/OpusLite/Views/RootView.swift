@@ -3,6 +3,7 @@ import SwiftUI
 struct RootView: View {
     @Bindable var library: Library
     @Bindable var player: Player
+    let association: FileAssociation
     @Binding var showInspector: Bool
     @Binding var showExport: Bool
     @Binding var showRecorder: Bool
@@ -13,7 +14,7 @@ struct RootView: View {
         } content: {
             FileListView(library: library)
         } detail: {
-            DetailView(library: library, player: player, showExport: $showExport)
+            DetailView(library: library, player: player, association: association, showExport: $showExport)
         }
         .inspector(isPresented: $showInspector) {
             InspectorView(library: library)

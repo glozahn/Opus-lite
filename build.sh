@@ -13,6 +13,7 @@ cp "$BIN" "$APP/Contents/MacOS/OpusLite"
 strip -x "$APP/Contents/MacOS/OpusLite"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 cp -R Resources/*.lproj "$APP/Contents/Resources/"
+cp CHANGELOG.md "$APP/Contents/Resources/"
 [[ -f Resources/AppIcon.icns ]] && cp Resources/AppIcon.icns "$APP/Contents/Resources/" || true
 codesign --force --sign - "$APP"
 

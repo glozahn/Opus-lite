@@ -14,6 +14,8 @@ A native macOS app that turns WhatsApp voice notes, audio, video, PDFs and image
 
 Drag files or whole folders onto the window, use **Import** (⌘O), right-click a file in Finder and choose *Open With ▸ Opus Lite*, or **Record** a voice note from the microphone (⇧⌘N). New files are transcribed automatically, one after another.
 
+Make Opus Lite the app for voice notes in *Settings ▸ General ▸ Voice notes ▸ Make Default*, and double-clicking any `.opus`, `.ogg` or `.oga` file in Finder opens and transcribes it.
+
 | You drop | Opus Lite does |
 | --- | --- |
 | WhatsApp voice notes (`.opus`, `.ogg`) | Decodes them natively and transcribes them — no conversion step. |
@@ -69,9 +71,13 @@ Pick the transcription language in *Options*; it starts with your system languag
 
 Speaker identification and automatic language detection are not included: macOS has no on-device API for them.
 
+## Updates
+
+Opus Lite keeps itself up to date. It checks GitHub Releases, downloads the disk image in the background, and only installs it after checking the download against its published SHA-256 and confirming that it is signed by the same developer and notarized by Apple. A button in the sidebar restarts into the new version; if you ignore it, the update lands when you quit. Turn it off in Settings, check by hand with *Opus Lite ▸ Check for Updates…*, and read what changed with *Help ▸ What's New*.
+
 ## Settings
 
-- **General**: appearance (System, Light, Dark — also the sun/moon switch in the toolbar), **app language** (System, English, Español), transcribe on import, timestamps, default export format.
+- **General**: appearance (System, Light, Dark — also the sun/moon switch in the toolbar), **app language** (System, English, Español), transcribe on import, timestamps, default export format, automatic updates, and the default app for voice notes.
 - **Models**: default engine and per-language model downloads.
 - **Privacy**: permission status and where your data lives.
 - **Shortcuts** and **About**.
@@ -96,7 +102,7 @@ The interface is available in **English** and **Spanish**. By default it follows
 
 ## Privacy
 
-Opus Lite sends no audio, text or analytics anywhere. Transcription uses the macOS speech frameworks and OCR uses Vision, both on device. The library and your recordings live in `~/Library/Application Support/OpusLite/`; audio extracted from videos is cached in `~/Library/Caches/OpusLite/`.
+Opus Lite sends no audio, text or analytics anywhere. The only network request it makes on its own is the update check against GitHub Releases, which you can turn off. Transcription uses the macOS speech frameworks and OCR uses Vision, both on device. The library and your recordings live in `~/Library/Application Support/OpusLite/`; audio extracted from videos is cached in `~/Library/Caches/OpusLite/`.
 
 The app asks for the microphone only when you record, and for speech recognition only if you use the classic SFSpeech engine.
 
@@ -113,6 +119,8 @@ open "build/Opus Lite.app"
 
 `build.sh` compiles a release build with Swift Package Manager and assembles the app bundle — no Xcode project needed. Copy the app to `/Applications` to keep it.
 
+To ship a release, `scripts/sign-and-notarize.sh` signs with a Developer ID, notarizes, staples and packages a DMG. It reads your identity and App Store Connect key from a local, git-ignored `scripts/notarize.env` (see `scripts/notarize.env.example`). Certificates and private keys never go in the repository.
+
 | Path | Contents |
 | --- | --- |
 | `Sources/OpusLite/` | App, library and queue, transcription engines, media and OCR, export. |
@@ -123,3 +131,7 @@ open "build/Opus Lite.app"
 ### Adding a language
 
 Interface strings are written in English in the code. Copy `Resources/es.lproj/Localizable.strings` to a new `xx.lproj` folder, translate the values, and add the language code to `CFBundleLocalizations` in `Info.plist`.
+
+## Support the project
+
+If Opus Lite saves you time, [leave a star on GitHub](https://github.com/glozahn/Opus-lite) — it helps others find it. Bugs and ideas go to [Issues](https://github.com/glozahn/Opus-lite/issues).

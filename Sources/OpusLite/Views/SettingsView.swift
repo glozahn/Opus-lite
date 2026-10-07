@@ -4,21 +4,23 @@ import SwiftUI
 
 struct SettingsView: View {
     @Bindable var library: Library
+    let association: FileAssociation
 
     var body: some View {
         TabView {
-            Tab("General", systemImage: "gearshape") { GeneralSettings(library: library) }
+            Tab("General", systemImage: "gearshape") { GeneralSettings(library: library, association: association) }
             Tab("Models", systemImage: "cpu") { ModelSettings(library: library) }
             Tab("Privacy", systemImage: "lock") { PrivacySettings() }
             Tab("Shortcuts", systemImage: "keyboard") { ShortcutSettings() }
             Tab("About", systemImage: "info.circle") { AboutSettings(library: library) }
         }
-        .frame(width: 540, height: 400)
+        .frame(width: 540, height: 520)
     }
 }
 
 private struct GeneralSettings: View {
     @Bindable var library: Library
+    let association: FileAssociation
 
     var body: some View {
         Form {
@@ -31,6 +33,40 @@ private struct GeneralSettings: View {
             Toggle("Show timestamps", isOn: $library.showTimestamps)
             Picker("Export format", selection: $library.exportFormat) {
                 ForEach(ExportFormat.allCases) { Text("\($0.title) — \($0.detail)").tag($0) }
+            }
+            Section("Updates") {
+                Toggle("Update automatically", isOn: Binding(
+                    get: { Updater.shared.automatic },
+                    set: { Updater.shared.automatic = $0 }
+                ))
+                HStack {
+                    Text("Version \(UpdateChecker.currentVersion)").foregroundStyle(.secondary)
+                    Spacer()
+                    if Updater.shared.working { ProgressView().controlSize(.small) }
+                    Button("Check for Updates…") { Updater.shared.checkNow() }
+                        .disabled(Updater.shared.working)
+                }
+            }
+            Section("Voice notes") {
+                HStack {
+                    Image(systemName: association.isDefault ? "checkmark.circle.fill" : "doc.badge.gearshape")
+                        .foregroundStyle(association.isDefault ? Color.green : Color.secondary)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(association.isDefault ? "Opus Lite opens your .opus files" : "App for .opus files")
+                        if !association.isDefault {
+                            Text("Now: \(association.currentName ?? String(localized: "no app"))")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    Spacer()
+                    if !association.isDefault {
+                        Button("Make Default") { association.makeDefault() }
+                    }
+                }
+                if let error = association.error {
+                    Text(error).font(.caption).foregroundStyle(.red)
+                }
             }
         }
         .formStyle(.grouped)
@@ -223,6 +259,17 @@ private struct AboutSettings: View {
                 stat(library.items.reduce(0) { $0 + $1.duration }.clock, "of audio")
             }
             .padding(.top, 6)
+            Link(destination: UpdateChecker.repositoryURL) {
+                Label("Visit GitHub and leave a star", systemImage: "star.fill")
+                    .font(.callout.weight(.medium))
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 8)
+                    .background(Color.accentColor, in: Capsule())
+                    .foregroundStyle(.white)
+            }
+            .padding(.top, 6)
+            Button("Check for Updates…") { Updater.shared.checkNow() }
+                .buttonStyle(.link)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

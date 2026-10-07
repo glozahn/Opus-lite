@@ -4,7 +4,9 @@ import SwiftUI
 struct DetailView: View {
     @Bindable var library: Library
     @Bindable var player: Player
+    let association: FileAssociation
     @Binding var showExport: Bool
+    @AppStorage("hideDefaultAppTip") private var hideDefaultAppTip = false
 
     var body: some View {
         Group {
@@ -21,6 +23,13 @@ struct DetailView: View {
                 } actions: {
                     Button("Import…") { library.importPanel() }
                         .buttonStyle(.borderedProminent)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .overlay(alignment: .bottom) {
+                    if !association.isDefault && !hideDefaultAppTip {
+                        DefaultAppTip(association: association) { hideDefaultAppTip = true }
+                            .padding(24)
+                    }
                 }
             }
         }
@@ -448,6 +457,43 @@ private struct DocumentPreview: View {
                 image = NSImage(contentsOf: item.url)
             }
         }
+    }
+}
+
+// MARK: - Default app tip
+
+/// Offers to open WhatsApp voice notes with Opus Lite on double-click.
+private struct DefaultAppTip: View {
+    let association: FileAssociation
+    let onDismiss: () -> Void
+
+    var body: some View {
+        HStack(spacing: 14) {
+            Image(nsImage: NSWorkspace.shared.icon(for: FileAssociation.voiceNoteType))
+                .resizable()
+                .frame(width: 36, height: 36)
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Open .opus files with Opus Lite")
+                    .font(.callout.weight(.semibold))
+                Text("Double-click a WhatsApp voice note in Finder to transcribe it here. Now they open with \(association.currentName ?? String(localized: "no app")).")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 8)
+            Button("Make Default") { association.makeDefault() }
+                .buttonStyle(.borderedProminent)
+                .controlSize(.small)
+            Button(action: onDismiss) {
+                Image(systemName: "xmark")
+            }
+            .buttonStyle(.borderless)
+            .foregroundStyle(.secondary)
+            .help("Dismiss")
+        }
+        .padding(14)
+        .frame(width: 520)
+        .background(RoundedRectangle(cornerRadius: 14, style: .continuous).fill(.quaternary.opacity(0.6)))
     }
 }
 

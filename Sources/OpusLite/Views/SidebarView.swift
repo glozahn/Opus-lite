@@ -20,6 +20,25 @@ struct SidebarView: View {
         }
         .listStyle(.sidebar)
         .safeAreaInset(edge: .bottom) {
+            VStack(alignment: .leading, spacing: 12) {
+            if let ready = Updater.shared.ready {
+                Button { Updater.shared.install(relaunch: true) } label: {
+                    Label("Update to \(ready.version)", systemImage: "arrow.down.circle.fill")
+                        .font(.callout.weight(.medium))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 5)
+                        .background(Color.accentColor.opacity(0.14), in: Capsule())
+                        .foregroundStyle(Color.accentColor)
+                }
+                .buttonStyle(.plain)
+                .help("Restarts Opus Lite into the new version. Otherwise it installs when you quit.")
+            }
+            Link(destination: UpdateChecker.repositoryURL) {
+                Label("Star on GitHub", systemImage: "star.fill")
+                    .font(.callout)
+            }
+            .foregroundStyle(.secondary)
+            .help("Leave a star on GitHub")
             HStack(alignment: .top, spacing: 8) {
                 Circle()
                     .fill(.green)
@@ -33,6 +52,7 @@ struct SidebarView: View {
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
+            }
             }
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
