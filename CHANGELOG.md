@@ -2,6 +2,10 @@
 
 Every release of Opus Lite. The newest is at the top; each one is also on [GitHub](https://github.com/glozahn/Opus-lite/releases).
 
+## 2.1.1
+
+- With no files in a list, the header, search field and drop zone stay at the top of the column instead of floating to the middle.
+
 ## 2.1
 
 Opus Lite now keeps itself up to date and can become the app that opens your voice notes.

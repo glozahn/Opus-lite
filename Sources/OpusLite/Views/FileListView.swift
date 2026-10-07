@@ -12,7 +12,9 @@ struct FileListView: View {
             searchField
             if library.filter != .trash { dropZone }
             if items.isEmpty {
+                // Fill the column so the header, search and drop zone stay at the top.
                 emptyState
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 List(selection: $library.selection) {
                     ForEach(items) { item in
