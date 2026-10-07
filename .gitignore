@@ -7,3 +7,7 @@ DerivedData/
 .DS_Store
 # Se regenera con Tools/make_icon.sh; el .icns sí se versiona.
 Resources/AppIcon.png
+
+# Signing secrets and release output
+scripts/notarize.env
+dist/
