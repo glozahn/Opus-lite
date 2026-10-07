@@ -6,9 +6,9 @@
 
 A native macOS app that turns WhatsApp voice notes, audio, video, PDFs and images into text — entirely on your Mac. Built with SwiftUI and the system speech and vision frameworks. No bundled models, no dependencies: the whole app is about 1.3 MB.
 
-![macOS 26 or later](https://img.shields.io/badge/macOS-26%2B-111820?style=flat-square) ![Apple silicon](https://img.shields.io/badge/Apple%20silicon-arm64-167c87?style=flat-square) ![On-device](https://img.shields.io/badge/processing-on--device-2ea44f?style=flat-square) ![English · Español](https://img.shields.io/badge/languages-English%20%C2%B7%20Espa%C3%B1ol-167c87?style=flat-square)
+[![Latest release](https://img.shields.io/github/v/release/glozahn/Opus-lite?style=flat-square&color=167c87&label=download)](https://github.com/glozahn/Opus-lite/releases/latest) ![macOS 26 or later](https://img.shields.io/badge/macOS-26%2B-111820?style=flat-square) ![Apple silicon](https://img.shields.io/badge/Apple%20silicon-arm64-167c87?style=flat-square) ![On-device](https://img.shields.io/badge/processing-on--device-2ea44f?style=flat-square) ![English · Español](https://img.shields.io/badge/languages-English%20%C2%B7%20Espa%C3%B1ol-167c87?style=flat-square)
 
-[Build from source](#build-from-source) · [Engines](#engines) · [Shortcuts](#shortcuts) · [Privacy](#privacy)
+[Download Opus Lite](https://github.com/glozahn/Opus-lite/releases/latest) · [Build from source](#build-from-source) · [Engines](#engines) · [Shortcuts](#shortcuts) · [Privacy](#privacy)
 
 ## Drop it in, read it back
 
